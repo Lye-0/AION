@@ -8,7 +8,7 @@
   const hours=date.getHours(),minutes=date.getMinutes(),seconds=date.getSeconds(),milliseconds=date.getMilliseconds();
   const localSeconds=hours*3600+minutes*60+seconds+milliseconds/1000;
   // Blades point along local +Y at twelve; negative Z turns clockwise.
-  // Full local epoch keeps rear wheels continuous across midnight.
+  // Local epoch is retained for diagnostics; the mechanical drive has its own time.
   const driveSeconds=date.getTime()/1000-date.getTimezoneOffset()*60;
   return {timestamp:date.getTime(),hours,minutes,seconds,milliseconds,localSeconds,driveSeconds,
    hourAngle:-TAU*(localSeconds%43200)/43200,

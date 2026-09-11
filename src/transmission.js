@@ -30,11 +30,11 @@
    links.push({kind:'shaft',from:parentId,to:id});return part;
   }
   // Motion works: 40:120 followed by 32:128 = a 12:1 reduction.
-  add('minute-spindle',[0,0,-26],10,A.Clock.MINUTE_RATE);
+  add('minute-spindle',[0,0,-26],10,-1); // relative reference; the pendulum graph supplies the actual rate
   mesh('motion-wheel','minute-spindle',30,[4,-3]);
   coax('motion-pinion','motion-wheel',8,-46);
   mesh('hour-wheel','motion-pinion',32,[-4,3]);
-  // Upstream train: 5 x 4 x 3 = 60. The deep input turns once per minute.
+  // Upstream train: 5 x 4 x 3 = 60. These are relative exhibition ratios, not civil-time rates.
   coax('minute-barrel','minute-spindle',30,-68);
   mesh('third-pinion','minute-barrel',6,[-4,3]);
   coax('third-wheel','third-pinion',24,-90);

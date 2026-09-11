@@ -66,7 +66,7 @@
  <button class="dialog-close icon-button" data-close="about" aria-label="説明を閉じる">×</button>
  <p class="eyebrow">ARCHIVE 001 — AION</p><h2 id="about-title">時の建築。</h2>
  <p class="about-lead">時を測るのではない。<br>時が、ここに存在している。</p>
- <p>幾重にも連なる大環。地平を横切る伝達軸。<br>深い暗がりで往復を続ける、ひとつの振り子。</p>
+ <p>幾重にも連なる大環。地平を横切る伝達軸。<br>そのすべてにつながり、往復を続ける、ひとつの振り子。</p>
  <p>この機構がいつ動き始めたのか、記録は残されていない。歯車は互いを送り、輪は輪を追い越し、針だけが、こちらの世界の時刻を指し続ける。</p>
  <dl class="archive-data"><div><dt>建造者</dt><dd>不明</dd></div><div><dt>終端</dt><dd>未観測</dd></div><div><dt>状態</dt><dd>稼働中</dd></div></dl>
  <p class="about-footnote">架空の機械世界を鑑賞する、3Dのインタラクティブ作品です。設定はフィクションであり、実在する時計や物理機構の再現ではありません。</p>
@@ -79,9 +79,9 @@
  <div class="setting-label">機構の演出速度 <small>SCENE SPEED</small></div>
  <div class="speed-options" role="group" aria-label="機構の演出速度（時計の針には影響しません）"><button data-speed="0.3" aria-pressed="false">0.3 ×</button><button class="selected" data-speed="1" aria-pressed="true">1 ×</button><button data-speed="3" aria-pressed="false">3 ×</button></div>
  <div class="settings-help"><p><b>見渡す</b><span>ドラッグ / 一本指</span></p><p><b>近づく・離れる</b><span>ホイール / ピンチ</span></p><p><b>平行移動</b><span>右ドラッグ / 二本指</span></p><p><b>演出を止める</b><span>Space</span></p><p><b>操作画面を隠す</b><span>H</span></p></div>
- <p class="about-footnote">長針・短針と背後の駆動系は、端末の現在時刻に同期します。演出速度や停止操作によって時計は早送り・停止しません。演出停止中は時刻を毎秒更新します。<br><br>環境音は初期状態ではオフです。端末が熱くなる場合は、品質を下げるか演出を停止してください。</p>
+ <p class="about-footnote">全体の歯車・伝達軸・大環は、振り子の周期に合わせて連動します。演出を停止すると機構全体が止まります。長針・短針のみは端末の現在時刻に同期し続け、演出速度の影響を受けません。停止中の時刻は毎秒更新します。<br><br>環境音は初期状態ではオフです。端末が熱くなる場合は、品質を下げるか演出を停止してください。</p>
 </dialog>
 <noscript><div class="noscript">この3D作品には JavaScript が必要です。ブラウザで JavaScript を有効にして開いてください。</div></noscript>
-<script src="src/math.js"></script><script src="src/geometry.js"></script><script src="src/shaders.js"></script><script src="src/renderer.js"></script><script src="src/clock.js"></script><script src="src/transmission.js"></script><script src="src/world.js"></script><script src="src/controls.js"></script><script src="src/audio.js"></script><script src="src/app.js"></script>
+<script src="src/math.js"></script><script src="src/geometry.js"></script><script src="src/shaders.js"></script><script src="src/renderer.js"></script><script src="src/clock.js"></script><script src="src/transmission.js"></script><script src="src/mechanism.js"></script><script src="src/linkage.js"></script><script src="src/world.js"></script><script src="src/controls.js"></script><script src="src/audio.js"></script><script src="src/app.js"></script>
 </body>
 </html>

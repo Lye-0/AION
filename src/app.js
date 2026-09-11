@@ -12,7 +12,7 @@
   $('status-label').textContent=playing?'MECHANISM ACTIVE':'SCENE PAUSED / CLOCK LIVE';$('status-dot').classList.toggle('paused',!playing);
  }
  function setDrift(on){if(camera)camera.drift=on;$('drift').classList.toggle('active',on);$('drift').setAttribute('aria-pressed',String(on));}
- const descriptions=['終わりを持たない機構。<br>始まりを持たない時間。','ひとつの運動が、<br>世界の奥へと伝わっていく。','行って、帰る。<br>ただそれだけを、永遠に。'];
+ const descriptions=['終わりを持たない機構。<br>始まりを持たない時間。','ひとつの振動が、<br>すべての歯車へ伝わる。','往復する振り子が、<br>世界の機構を送り続ける。'];
  function setView(i,immediate=false){
   state.view=i;camera.setPreset(i,immediate);setDrift(!reduced);
   document.querySelectorAll('[data-view]').forEach(b=>{const selected=Number(b.dataset.view)===i;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
@@ -72,8 +72,9 @@
    bindUI();setPlaying(state.playing);setDrift(!reduced);world.update(0,A.Clock.sample());camera.update(0,0);renderer.render(camera,0);
    $('loading-progress').textContent='100';$('loading-caption').textContent='時間は、すでに流れている。';state.ready=true;document.body.dataset.ready='true';
    Object.defineProperty(window,'__AION_DEBUG__',{get:()=>({...state,render:renderer.stats(),rotorAngles:world.rotors.slice(0,6).map(r=>r.node.rotation[r.axis]),pendulumAngle:world.pendulums[0].node.rotation[2],camera:[...camera.eye],cameraTarget:[...camera.target],cameraDistance:camera.distance,drift:camera.drift,audio:{enabled:audio.enabled,state:audio.ctx?.state||'uninitialized'},assemblies:world.gearCount,
+    mechanism:{...world.network.summary(),driveTime:world.motion.driveTime,release:world.motion.release,angles:world.network.parts.filter(p=>p.binding||p.mode==='swing').map(p=>({id:p.id,kind:p.kind,speed:p.speed,angle:p.node.rotation[p.binding?.axis??2]}))},
     clock:{...world.clock.sample,minuteAngle:world.clock.minute.rotation[2],hourAngle:world.clock.hour.rotation[2]},
-    rearTransmission:{gears:world.transmission.parts.length,meshLinks:world.transmission.links.filter(l=>l.kind==='mesh').length,shafts:world.transmission.links.filter(l=>l.kind==='shaft').length,angles:world.transmission.parts.slice(0,14).map(p=>({id:p.id,angle:p.node.rotation[2],speed:p.speed}))}})});
+    rearTransmission:{gears:world.transmission.parts.length,meshLinks:world.transmission.links.filter(l=>l.kind==='mesh').length,shafts:world.transmission.links.filter(l=>l.kind==='shaft').length,angles:world.transmission.parts.slice(0,14).map(p=>({id:p.id,angle:p.node.rotation[2],speed:world.network.byId.get(p.id).speed}))}})});
    await nextFrame();$('loading').classList.add('done');raf=requestAnimationFrame(loop);
   }catch(e){showError(e);$('retry').addEventListener('click',()=>location.reload());}
  }

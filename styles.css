@@ -6,3 +6,7 @@
 @media(max-height:650px) and (min-width:721px){.hero{bottom:151px}.hero h1{font-size:83px;margin:15px 0}.hero-tagline{margin-bottom:14px;font-size:13px}.hero-description{font-size:9px}.hero-meta{display:none}.interaction-hint{bottom:110px}.site-header{top:20px}.exhibit-note{top:115px}.frame-corner{top:85px}.lower-bar{bottom:36px}.bottom-caption{bottom:10px}}
 @media(max-height:740px) and (max-width:720px){.hero{bottom:max(163px,calc(env(safe-area-inset-bottom) + 150px))}.hero h1{font-size:59px;margin:10px 0}.hero-description{display:none}.hero-tagline{font-size:10px;margin:0}.hero .eyebrow{font-size:5.5px}.exhibit-note p{display:none}.exhibit-note{top:95px}.note-rule{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* In detail views the machinery, not the title, occupies the full stage. */
+body[data-active-view="1"] .hero,body[data-active-view="2"] .hero{opacity:0;visibility:hidden}
+body[data-active-view="1"] .edge-shade,body[data-active-view="2"] .edge-shade{opacity:.48;transition:opacity .8s}

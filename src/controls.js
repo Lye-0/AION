@@ -3,8 +3,8 @@
  const A=window.AION,{sub,norm,cross,mix,clamp,lookAt,perspective,mm}=A.M;
  const VIEWS=[
   {eye:[88,42,134],target:[-8,11,-22],fov:43,name:'全景',en:'THE CONTINUUM'},
-  {eye:[97,6,54],target:[49,-13,-15],fov:47,name:'機構の深部',en:'THE TRANSMISSION'},
-  {eye:[44,-7,64],target:[-34,-5,-2],fov:60,name:'大振り子',en:'THE OSCILLATOR'}
+  {eye:[139,31,-12],target:[8,14,-102],fov:55,name:'機構の深部',en:'THE TRANSMISSION'},
+  {eye:[93,25,100],target:[-23,16,-18],fov:53,name:'大振り子',en:'THE OSCILLATOR'}
  ];
  class CameraControls {
   constructor(canvas,onInteract=()=>{}){
