@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('..',import.meta.url));
+const html=readFileSync(root+'index.html','utf8'),css=readFileSync(root+'styles.css','utf8'),app=readFileSync(root+'src/app.js','utf8');
+test('every linked local script and stylesheet is included',()=>{for(const m of html.matchAll(/(?:src|href)="([^"]+)"/g)){if(m[1].startsWith('data:'))continue;assert.ok(existsSync(root+m[1]),m[1]);}});
+test('the site makes no external library, image or font requests',()=>{assert.doesNotMatch(html,/<script[^>]+src="https?:/);assert.doesNotMatch(css,/@import|https?:\/\/|@font-face/);});
+test('normal quality is the default on every screen size',()=>{assert.match(html,/value="standard" selected/);assert.match(app,/quality:'standard'/);assert.doesNotMatch(app,/mobile.*quality.*low/);});
+test('mobile, reduced motion, and immersive modes have styles',()=>{assert.match(css,/max-width:720px/);assert.match(css,/prefers-reduced-motion:reduce/);assert.match(css,/body\.cinema \.restore-ui/);});
+test('critical UI controls and accessible dialogs exist',()=>{for(const id of['pause','sound','cinema','restore-ui','quality','about','settings','retry'])assert.match(html,new RegExp(`id="${id}"`));assert.equal((html.match(/data-view="/g)||[]).length,3);assert.match(html,/aria-live="polite"/);});
+test('audio is opt-in and page visibility is handled',()=>{assert.match(app,/audio\.setEnabled\(!audio\.enabled\)/);assert.match(app,/visibilitychange/);assert.match(app,/webglcontextlost/);});
