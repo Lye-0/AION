@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 const sandbox={window:{},console,Float32Array,Math,Map};vm.createContext(sandbox);
-for(const name of['math','geometry','world','controls'])vm.runInContext(readFileSync(fileURLToPath(new URL(`../src/${name}.js`,import.meta.url)),'utf8'),sandbox);
+for(const name of['math','geometry','clock','transmission','world','controls'])vm.runInContext(readFileSync(fileURLToPath(new URL(`../src/${name}.js`,import.meta.url)),'utf8'),sandbox);
 const A=sandbox.window.AION,M=A.M,near=(x,y)=>assert.ok(Math.abs(x-y)<1e-5,`${x} != ${y}`);
 const world=A.createWorld();
 test('matrix multiplication preserves identity',()=>{const a=M.compose([3,5,7],[.1,.4,.9],[2,3,4]);assert.deepEqual(M.mm(M.identity(),a),a);assert.deepEqual(M.mm(a,M.identity()),a);});

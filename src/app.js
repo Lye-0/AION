@@ -2,14 +2,14 @@
 (() => {
  const A=window.AION,$=id=>document.getElementById(id),reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const state={playing:!reduced,speed:1,time:0,view:0,cinema:false,ready:false,quality:'standard',frames:0};
- let renderer,world,camera,audio,raf=0,last=0,toastTimer=0,alive=true,pendingAudio=false,forceRender=true,lastWorldTime=-1,lastCameraSignature='';
+ let renderer,world,camera,audio,raf=0,last=0,toastTimer=0,alive=true,pendingAudio=false,forceRender=true,lastWorldTime=-1,lastClockStamp=-1,lastCameraSignature='';
  const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
  function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2800);}
  function showError(error){state.ready=false;cancelAnimationFrame(raf);$('loading').classList.add('done');$('error-message').textContent=error instanceof Error?error.message:String(error);$('error-panel').hidden=false;console.error('[AION]',error);}
  function setPlaying(playing){
-  state.playing=playing;$('pause').setAttribute('aria-pressed',String(!playing));$('pause').setAttribute('aria-label',playing?'時間を止める':'時間を動かす');$('pause').title=playing?'時間を止める（Space）':'時間を動かす（Space）';
+  state.playing=playing;$('pause').setAttribute('aria-pressed',String(!playing));$('pause').setAttribute('aria-label',playing?'機構の演出を止める':'機構の演出を動かす');$('pause').title=playing?'機構の演出を止める（Space）／時計は現在時刻を維持':'機構の演出を動かす（Space）';
   $('pause-icon').innerHTML=playing?'<path d="M9 5v14M15 5v14"/>':'<path d="m8 4 11 8-11 8V4Z"/>';
-  $('status-label').textContent=playing?'MECHANISM ACTIVE':'TIME SUSPENDED';$('status-dot').classList.toggle('paused',!playing);
+  $('status-label').textContent=playing?'MECHANISM ACTIVE':'SCENE PAUSED / CLOCK LIVE';$('status-dot').classList.toggle('paused',!playing);
  }
  function setDrift(on){if(camera)camera.drift=on;$('drift').classList.toggle('active',on);$('drift').setAttribute('aria-pressed',String(on));}
  const descriptions=['終わりを持たない機構。<br>始まりを持たない時間。','ひとつの運動が、<br>世界の奥へと伝わっていく。','行って、帰る。<br>ただそれだけを、永遠に。'];
@@ -51,9 +51,13 @@
   const dt=last?Math.min((timestamp-last)/1000,.5):0;last=timestamp;
   if(state.playing)state.time+=dt*state.speed;
   try{
-   if(state.time!==lastWorldTime){world.update(state.time);lastWorldTime=state.time;forceRender=true;}
+   // Read the wall clock afresh: no accumulated lag, speed scaling or hidden-tab drift.
+   const epoch=Date.now(),clockStamp=state.playing?epoch:Math.floor(epoch/1000)*1000;
+   if(state.time!==lastWorldTime||clockStamp!==lastClockStamp){
+    world.update(state.time,A.Clock.sample(clockStamp));lastWorldTime=state.time;lastClockStamp=clockStamp;forceRender=true;
+   }
    camera.update(dt,state.time);const signature=camera.eye.join(',')+';'+camera.target.join(',')+';'+camera.fov;
-   if(forceRender||state.playing||signature!==lastCameraSignature){renderer.render(camera,state.time,state.playing);lastCameraSignature=signature;forceRender=false;}
+   if(forceRender||state.playing||signature!==lastCameraSignature){renderer.render(camera,state.time,state.playing||forceRender);lastCameraSignature=signature;forceRender=false;}
    audio.update(state.time,state.playing);
    state.frames++;if(state.frames%12===0){$('continuum').textContent=(state.time/60).toFixed(3).padStart(7,'0');}
    raf=requestAnimationFrame(loop);
@@ -65,9 +69,11 @@
    $('loading-progress').textContent='32';await nextFrame();world=A.createWorld();renderer.build(world.meshes);
    $('loading-progress').textContent='76';await nextFrame();camera=new A.CameraControls($('world'),()=>{setDrift(false);$('interaction-hint').style.opacity='0';});audio=new A.Soundscape();
    let saved;try{saved=localStorage.getItem('aion-quality');}catch{}if(['low','standard','high'].includes(saved)){state.quality=saved;renderer.setQuality(saved);$('quality').value=saved;}
-   bindUI();setPlaying(state.playing);setDrift(!reduced);world.update(0);camera.update(0,0);renderer.render(camera,0);
+   bindUI();setPlaying(state.playing);setDrift(!reduced);world.update(0,A.Clock.sample());camera.update(0,0);renderer.render(camera,0);
    $('loading-progress').textContent='100';$('loading-caption').textContent='時間は、すでに流れている。';state.ready=true;document.body.dataset.ready='true';
-   Object.defineProperty(window,'__AION_DEBUG__',{get:()=>({...state,render:renderer.stats(),rotorAngles:world.rotors.slice(0,6).map(r=>r.node.rotation[r.axis]),pendulumAngle:world.pendulums[0].node.rotation[2],camera:[...camera.eye],cameraTarget:[...camera.target],cameraDistance:camera.distance,drift:camera.drift,audio:{enabled:audio.enabled,state:audio.ctx?.state||'uninitialized'},assemblies:world.gearCount})});
+   Object.defineProperty(window,'__AION_DEBUG__',{get:()=>({...state,render:renderer.stats(),rotorAngles:world.rotors.slice(0,6).map(r=>r.node.rotation[r.axis]),pendulumAngle:world.pendulums[0].node.rotation[2],camera:[...camera.eye],cameraTarget:[...camera.target],cameraDistance:camera.distance,drift:camera.drift,audio:{enabled:audio.enabled,state:audio.ctx?.state||'uninitialized'},assemblies:world.gearCount,
+    clock:{...world.clock.sample,minuteAngle:world.clock.minute.rotation[2],hourAngle:world.clock.hour.rotation[2]},
+    rearTransmission:{gears:world.transmission.parts.length,meshLinks:world.transmission.links.filter(l=>l.kind==='mesh').length,shafts:world.transmission.links.filter(l=>l.kind==='shaft').length,angles:world.transmission.parts.slice(0,14).map(p=>({id:p.id,angle:p.node.rotation[2],speed:p.speed}))}})});
    await nextFrame();$('loading').classList.add('done');raf=requestAnimationFrame(loop);
   }catch(e){showError(e);$('retry').addEventListener('click',()=>location.reload());}
  }

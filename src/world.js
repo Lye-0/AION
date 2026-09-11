@@ -10,6 +10,7 @@
  };
  function createWorld(){
   const root=new A.Node(),meshes=[],rotors=[],pendulums=[];let gearCount=0;const rng=seeded(1771);
+  let clockTime=A.Clock.sample();const transmission=A.createTransmission();
   const group=(parent=root,p=[0,0,0],r=[0,0,0],s=[1,1,1])=>parent.add(new A.Node(p,r,s));
   function mesh(geometry,mat,parent=root,p=[0,0,0],r=[0,0,0],s=[1,1,1],tier=0){const n=group(parent,p,r,s);n.geometry=geometry;n.material=mat;n.tier=tier;meshes.push(n);return n;}
   const box=(parent,p,s,mat=MAT.iron,r=[0,0,0],tier=0)=>mesh(G.box(),mat,parent,p,r,s,tier);
@@ -24,7 +25,7 @@
    for(let i=0;i<count;i++){const a=i*TAU/count;cylinder(parent,[Math.cos(a)*radius,Math.sin(a)*radius,z],size,.13,MAT.edge,[0,0,a],tier);}
   }
   function gear(parent,p,radius,teeth,speed,options={}){
-   gearCount++;const {depth=2.2,spokes=8,rotation=[0,0,0],tier=0,mat=MAT.brass,shaft=0}=options;
+   gearCount++;const {depth=2.2,spokes=8,rotation=[0,0,0],tier=0,mat=MAT.brass,shaft=0,compact=false}=options;
    const n=rotor(parent,p,rotation,speed);
    mesh(G.annulus(radius,radius*.77,depth,128,.14,teeth),mat,n,[0,0,0],[0,0,0],[1,1,1],tier);
    ring(n,radius*.79,radius*.765,.28,MAT.edge,[0,0,depth*.52],[0,0,0],tier);
@@ -37,15 +38,16 @@
     const a=i*TAU/spokes,mid=radius*.48;
     box(n,[Math.cos(a)*mid,Math.sin(a)*mid,-.18],[radius*.61,radius*.052,depth*.65],MAT.iron,[0,0,a],tier);
     box(n,[Math.cos(a)*mid,Math.sin(a)*mid,depth*.31],[radius*.60,radius*.013,.13],mat,[0,0,a],tier);
-    const aa=a+.023;box(n,[Math.cos(aa)*mid,Math.sin(aa)*mid,-depth*.33],[radius*.6,radius*.014,.16],MAT.titanium,[0,0,aa],tier);
+    const aa=a+.023;if(!compact)box(n,[Math.cos(aa)*mid,Math.sin(aa)*mid,-depth*.33],[radius*.6,radius*.014,.16],MAT.titanium,[0,0,aa],tier);
    }
-   bolts(n,spokes*2,radius*.86,depth*.61,radius*.009,tier);
-   if(tier<2)radial(n,teeth,radius*.91,.3,.08,.09,depth*.6,MAT.darkGold,0,tier);
+   bolts(n,compact?spokes:spokes*2,radius*.86,depth*.61,radius*.009,tier);
+   if(tier<2&&!compact)radial(n,teeth,radius*.91,.3,.08,.09,depth*.6,MAT.darkGold,0,tier);
    if(shaft){cylinder(n,[0,0,-shaft*.45],hub*.35,shaft,MAT.steel,[0,0,0],tier);ring(n,hub*.63,hub*.35,.8,MAT.brass,[0,0,-shaft*.3],[0,0,0],tier);}
    return n;
   }
   // Monumental main annulus. A hollow mechanism rather than a conventional dial.
-  const centre=[17,20,-20],main=rotor(root,centre,[-.055,.10,.10],.0105);
+  const centre=[17,20,-20],clockFrame=group(root,centre,[-.055,.10,0]);
+  const main=rotor(clockFrame,[0,0,0],[0,0,.10],.0105);
   mesh(G.annulus(45,40.8,3.7,192,.22,180),MAT.brass,main);
   ring(main,44.5,43.92,.43,MAT.edge,[0,0,2.0]);
   ring(main,42.55,41.95,.6,MAT.titanium,[0,0,2.1]);
@@ -53,7 +55,12 @@
   ring(main,44.4,41.2,.7,MAT.iron,[0,0,-3.0]);
   ring(main,42.4,41.9,.2,MAT.gold,[0,0,-3.45]);
   radial(main,180,43.33,.47,.10,.12,2.27,MAT.darkGold);
-  radial(main,36,43.3,1.16,.16,.12,2.28,MAT.edge,.007);
+  // Reuse the existing 36 indices, anchored to twelve rather than a rotating ring.
+  const clockIndices=[];
+  for(let i=0;i<36;i++){
+   const a=Math.PI/2+i*TAU/36,major=i%3===0;
+   clockIndices.push(box(clockFrame,[Math.cos(a)*43.3,Math.sin(a)*43.3,2.34],[major?1.4:.58,.16,.12],major?MAT.edge:MAT.darkGold,[0,0,a]));
+  }
   radial(main,72,42.0,.45,.45,5.5,-.4,MAT.iron);
   bolts(main,72,44.17,2.32,.12);
   // A second offset retaining race remains fixed. Its supports sell the physical depth.
@@ -84,21 +91,66 @@
    box(arm,[14,0,0],[27,.52,1.2],MAT.iron);box(arm,[14,.3,.65],[26,.06,.13],MAT.titanium);
    box(arm,[27.9,0,0],[2.1,2.8,2.8],MAT.brass);cylinder(arm,[28.2,0,1.7],.48,.6,MAT.titanium);
   }
-  const hub=group(root,[17,20,-11]);
-  mesh(G.lathe([[.001,-13],[2.2,-13],[2.2,-9],[3.9,-9],[4.3,-8],[4.3,-3],[3.6,-2],[3.6,3],[2.2,4],[2.2,7],[.001,7]],80),MAT.iron,hub);
+  const hub=group(clockFrame,[0,0,9]);
+  mesh(G.lathe([[.001,-81],[.46,-81],[.46,-38],[1.25,-38],[1.25,-19],[2.2,-19],[2.2,-9],[3.9,-9],[4.3,-8],[4.3,-3],[3.6,-2],[3.6,3],[2.2,4],[2.2,7],[.001,7]],80),MAT.iron,hub);
   ring(hub,4.55,3.65,.5,MAT.gold,[0,0,-2]);ring(hub,3.65,2.8,.45,MAT.edge,[0,0,3.4]);ring(hub,2.88,1.3,.7,MAT.brass,[0,0,4.2]);
   ring(hub,1.36,.85,.5,MAT.dimLight,[0,0,4.7]);cylinder(hub,[0,0,5],.73,.8,MAT.black);bolts(hub,12,3.15,3.9,.14);
-  const needle=rotor(root,[17,20,-5],[.035,.03,-.62],.014);
+  const needle=group(clockFrame,[0,0,15]); // minute hand, no exhibition-speed multiplier
   const blade=G.prism([[-.72,-9],[.72,-9],[1.1,23],[.19,36],[0,39],[-.19,36],[-1.1,23]],.7);
   mesh(blade,MAT.edge,needle);box(needle,[0,11,.43],[.15,35,.09],MAT.brass);
   ring(needle,3.2,2.48,.7,MAT.brass,[0,-10,0]);box(needle,[0,-7,0],[1.4,5,1.2],MAT.iron);
-  const needle2=rotor(root,[17,20,-2],[0,0,1.62],-.006);
-  mesh(blade,MAT.darkGold,needle2,[0,0,0],[0,0,0],[.7,.67,.8]);box(needle2,[0,8,.36],[.09,22,.10],MAT.gold);
+  const needle2=group(clockFrame,[0,0,18]); // hour hand, including minutes and seconds
+  mesh(blade,MAT.brass,needle2,[0,0,0],[0,0,0],[.7,.67,.8]);box(needle2,[0,8,.36],[.09,22,.10],MAT.gold);
   // A same-module train. Tangent pitch circles and reciprocal tooth ratios.
   const trainA=gear(root,[65.8,-19.82,-20],18,72,-.0105*180/72,{depth:3.2,spokes:8,mat:MAT.titanium,shaft:43});
   const trainB=gear(root,[89.8,-37.82,-20],12,48,.0105*180/48,{depth:2.8,spokes:6,mat:MAT.brass,shaft:68});
   const trainC=gear(root,[84.9,-65.38,-20],16,64,-.0105*180/64,{depth:3.0,spokes:8,mat:MAT.iron,shaft:30});
   gearCount++; // the annular driver
+  // Added geometry is confined to the back of the fixed clock plane.
+  // The complete original foreground below remains unchanged.
+  const rearStart=meshes.length,rearNodes=new Map();
+  for(let i=0;i<transmission.parts.length;i++){
+   const part=transmission.parts[i],mat=[MAT.brass,MAT.iron,MAT.titanium,MAT.darkGold][i%4];
+   const n=gear(clockFrame,part.position,part.radius,part.teeth,part.speed,{
+    depth:part.radius>=24?3.1:2.2,spokes:part.radius>=18?8:6,
+    rotation:[0,0,part.phase],mat,compact:true,tier:1
+   });
+   const drive=rotors[rotors.length-1];drive.clockDriven=true;drive.id=part.id;
+   rearNodes.set(part.id,n);part.node=n;
+  }
+  // Coaxial compound stages: visible steel axles, brass couplings and bearings.
+  for(const link of transmission.links){
+   if(link.kind!=='shaft')continue;
+   const a=transmission.byId.get(link.from),b=transmission.byId.get(link.to);
+   const z=(a.position[2]+b.position[2])/2,length=Math.abs(a.position[2]-b.position[2]);
+   const radius=Math.max(.45,Math.min(a.radius,b.radius)*.057);
+   const spindle=rotor(clockFrame,[a.position[0],a.position[1],z],[0,0,a.phase],a.speed);
+   rotors[rotors.length-1].clockDriven=true;
+   cylinder(spindle,[0,0,0],radius,length+2.8,MAT.steel);
+   box(spindle,[radius,0,0],[.17,.24,length*.8],MAT.gold);
+   for(const end of[-length/2+3.6,length/2-3.6]){
+    ring(spindle,radius*1.8,radius*1.05,1.2,MAT.brass,[0,0,end]);
+    const bearing=group(clockFrame,[a.position[0],a.position[1],z+end]);
+    ring(bearing,radius*2.5,radius*1.9,.85,MAT.iron);
+    box(bearing,[0,-radius*3.7,-.45],[radius*4.1,radius*3.3,1.8],MAT.iron);
+   }
+  }
+  // The hand hub's original shaft now extends through these two output collars.
+  for(const [z,r] of [[-26,1.5],[-46,2.3],[-68,1.5]]){
+   ring(clockFrame,r+.5,r,1.2,MAT.brass,[0,0,z+3.7]);
+  }
+  // Thin rear carrier ribs hold the gear train without closing the dial opening.
+  for(const z of[-37,-79,-121,-173]){
+   for(const x of[-84,88]){
+    box(clockFrame,[x,0,z],[1.5,154,2.5],MAT.iron);
+    box(clockFrame,[x+.8,0,z+1.3],[.12,154,.16],MAT.brass);
+   }
+   for(const y of[-76,77]){
+    box(clockFrame,[2,y,z],[172,1.8,3.0],MAT.iron);
+    for(let x=-77;x<=80;x+=16)cylinder(clockFrame,[x,y,z+1.6],.22,.2,MAT.edge);
+   }
+  }
+  const rearMeshes=meshes.slice(rearStart);rearMeshes.forEach(n=>n.region='rear-transmission');
   // Near field: massive, cropped flywheel and long coaxial machine parts.
   gear(root,[-49,-38,28],37,148,-.014,{depth:5.5,spokes:9,mat:MAT.iron,rotation:[.02,-.12,.12],shaft:60});
   gear(root,[-48,-38,59],12,48,-.014,{depth:3,spokes:6,mat:MAT.brass});
@@ -149,13 +201,18 @@
    cylinder(root,[102,10-i*3.7,-6],4.3,2.7,i%2?MAT.iron:MAT.brass,[Math.PI/2,0,0]);
    cylinder(root,[102,13,-6],.5,62,MAT.steel,[Math.PI/2,0,0]);
   }
-  root.update();
-  function update(t){
-   for(const r of rotors){r.node.rotation[r.axis]=r.phase+t*r.speed;r.node.refresh();}
+  function update(t,sample=clockTime){
+   clockTime=sample;
+   for(const r of rotors){r.node.rotation[r.axis]=r.phase+(r.clockDriven?(sample.driveSeconds*r.speed)%TAU:t*r.speed);r.node.refresh();}
    for(const p of pendulums){p.node.rotation[2]=Math.sin(t*p.frequency+p.phase)*p.amplitude;p.node.refresh();}
+   needle.rotation[2]=sample.minuteAngle;needle.refresh();
+   needle2.rotation[2]=sample.hourAngle;needle2.refresh();
    root.update();
   }
-  return {root,meshes,rotors,pendulums,gearCount,update,materials:MAT,centre,metadata:{title:'AION',seed:1771,views:3}};
+  update(0,clockTime);
+  return {root,meshes,rotors,pendulums,gearCount,update,materials:MAT,centre,transmission,rearMeshes,
+   clock:{frame:clockFrame,indices:clockIndices,minute:needle,hour:needle2,get sample(){return clockTime;}},
+   metadata:{title:'AION',seed:1771,views:3,version:'1.1.0',rearGearCount:transmission.parts.length}};
  }
  A.createWorld=createWorld;A.material=material;
 })();
